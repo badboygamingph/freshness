@@ -1,8 +1,6 @@
 {
-  "name": "Freshness - Food Freshness Classification & Dataset Hub",
-  "description": "Food freshness classification dataset assessment and labeling studio with Supabase integration.",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "name": "Freshness Evaluator",
+  "description": "Interactive food freshness assessment application with multi-user evaluation, analytics dashboard, and real-time data visualization.",
+  "version": "1.0.0",
+  "author": "badboygamingph"
 }
