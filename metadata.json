@@ -1,0 +1,8 @@
+{
+  "name": "Freshness - Food Freshness Classification & Dataset Hub",
+  "description": "Food freshness classification dataset assessment and labeling studio with Supabase integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
