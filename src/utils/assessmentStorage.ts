@@ -341,25 +341,49 @@ export function deleteAssessmentRecord(id: string): void {
   }
 }
 
-export const DEFAULT_SUPABASE_CONFIG: SupabaseConfig = {
-  url: import.meta.env.VITE_SUPABASE_URL?.trim() || 'https://kejoyjmselrzkrbgisvu.supabase.co',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtlam95am1zZWxyemtyYmdpc3Z1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTY1NjIsImV4cCI6MjEwODY3MjU2Mn0.kvX2wd9P5P-xCsKNyC0cyGY_yOd10rdOf_UF0ax3g2c',
-  tableName: 'freshness_assessments',
-  autoSync: true,
-  isConnected: true,
-};
+const FALLBACK_SUPABASE_URL = 'https://kejoyjmselrzkrbgisvu.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtlam95am1zZWxyemtyYmdpc3Z1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTY1NjIsImV4cCI6MjEwODY3MjU2Mn0.kvX2wd9P5P-xCsKNyC0cyGY_yOd10rdOf_UF0ax3g2c';
+
+function readVercelSupabaseEnv(): { url?: string; anonKey?: string } {
+  return {
+    url: import.meta.env.VITE_SUPABASE_URL?.trim() || undefined,
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || undefined,
+  };
+}
+
+/** Default config: Vercel `VITE_*` vars at build time, then project fallbacks. */
+export function createDefaultSupabaseConfig(): SupabaseConfig {
+  const env = readVercelSupabaseEnv();
+  const url = env.url || FALLBACK_SUPABASE_URL;
+  const anonKey = env.anonKey || FALLBACK_SUPABASE_ANON_KEY;
+  return {
+    url,
+    anonKey,
+    tableName: 'freshness_assessments',
+    autoSync: true,
+    isConnected: Boolean(url && anonKey),
+  };
+}
 
 export function getSupabaseConfig(): SupabaseConfig {
+  const env = readVercelSupabaseEnv();
+  const defaults = createDefaultSupabaseConfig();
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SUPABASE_CONFIG);
-    if (!raw) return DEFAULT_SUPABASE_CONFIG;
-    const parsed = JSON.parse(raw);
-    if (!parsed.url || !parsed.anonKey) {
-      return DEFAULT_SUPABASE_CONFIG;
-    }
-    return parsed;
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw) as Partial<SupabaseConfig>;
+    return {
+      ...defaults,
+      ...parsed,
+      // Production credentials from Vercel always win when set at build time.
+      url: env.url || parsed.url || defaults.url,
+      anonKey: env.anonKey || parsed.anonKey || defaults.anonKey,
+      tableName: parsed.tableName?.trim() || defaults.tableName,
+      autoSync: parsed.autoSync ?? defaults.autoSync,
+    };
   } catch {
-    return DEFAULT_SUPABASE_CONFIG;
+    return defaults;
   }
 }
 
@@ -445,7 +469,7 @@ export async function syncRecordToSupabase(record: AssessmentRecord, config: Sup
       assessed_at: record.assessed_at,
       notes: record.notes || null,
     };
-    const { error } = await client.from(tableName).upsert(payload);
+    const { error } = await client.from(tableName).upsert(payload, { onConflict: 'id' });
     if (error) {
       console.error('Supabase upsert error:', error);
       return false;

@@ -42,10 +42,10 @@ A modern, interactive food freshness assessment application with multi-user eval
    npm install
    ```
 
-3. Configure environment variables (optional, for Supabase):
+3. Configure Supabase (required for cloud data):
    ```bash
    cp .env.example .env
-   # Edit .env with your Supabase credentials
+   # Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see docs/SUPABASE_VERCEL_SETUP.md)
    ```
 
 ## Running Locally
@@ -83,9 +83,13 @@ This project is configured as a Vite SPA for Vercel:
 2. Import the repository in [Vercel](https://vercel.com)
 3. Keep **Framework Preset** as **Vite**, **Root Directory** as the repo root, and **Output Directory** as `dist`
 4. Add environment variables (Production + Preview):
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-5. Deploy. Client routes such as `/administrator` are rewritten to `index.html`.
+   - `VITE_SUPABASE_URL` — Supabase Project URL
+   - `VITE_SUPABASE_ANON_KEY` — Supabase **anon public** key
+5. **Redeploy** after changing env vars (Vite embeds them at build time).
+6. Run the Supabase SQL setup script once (see **[docs/SUPABASE_VERCEL_SETUP.md](docs/SUPABASE_VERCEL_SETUP.md)**).
+7. Deploy. Client routes such as `/administrator` are rewritten to `index.html`.
+
+**Complete Supabase + Vercel credentials guide:** [docs/SUPABASE_VERCEL_SETUP.md](docs/SUPABASE_VERCEL_SETUP.md)
 
 ### Other Platforms
 
