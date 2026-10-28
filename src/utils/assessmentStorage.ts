@@ -342,8 +342,8 @@ export function deleteAssessmentRecord(id: string): void {
 }
 
 export const DEFAULT_SUPABASE_CONFIG: SupabaseConfig = {
-  url: 'https://kejoyjmselrzkrbgisvu.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtlam95am1zZWxyemtyYmdpc3Z1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTY1NjIsImV4cCI6MjEwODY3MjU2Mn0.kvX2wd9P5P-xCsKNyC0cyGY_yOd10rdOf_UF0ax3g2c',
+  url: import.meta.env.VITE_SUPABASE_URL?.trim() || 'https://kejoyjmselrzkrbgisvu.supabase.co',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtlam95am1zZWxyemtyYmdpc3Z1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTY1NjIsImV4cCI6MjEwODY3MjU2Mn0.kvX2wd9P5P-xCsKNyC0cyGY_yOd10rdOf_UF0ax3g2c',
   tableName: 'freshness_assessments',
   autoSync: true,
   isConnected: true,

@@ -77,18 +77,15 @@ npm run preview
 
 ### Vercel
 
-This project is configured for Vercel deployment:
+This project is configured as a Vite SPA for Vercel:
 
 1. Push your code to GitHub
-2. Import the project in [Vercel](https://vercel.com)
-3. Vercel will automatically detect the configuration and deploy
-
-The `vercel.json` file includes:
-- Build command: `npm run build`
-- Output directory: `dist`
-- Rewrites for SPA routing
-- Security headers
-- Asset caching strategy
+2. Import the repository in [Vercel](https://vercel.com)
+3. Keep **Framework Preset** as **Vite**, **Root Directory** as the repo root, and **Output Directory** as `dist`
+4. Add environment variables (Production + Preview):
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+5. Deploy. Client routes such as `/administrator` are rewritten to `index.html`.
 
 ### Other Platforms
 
