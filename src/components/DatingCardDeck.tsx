@@ -15,9 +15,14 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { AssessmentRecord, DatasetItem, FreshnessClass, UserSession } from '../types/freshness';
+import {
+  ClassificationToast,
+  ClassificationToastState,
+} from './ClassificationToast';
 
 // Minimum time the undo loading state stays on screen so the revert is clearly visible.
 const UNDO_LOADING_MS = 600;
+const CLASSIFICATION_TOAST_MS = 2400;
 
 function matchesFolderFilter(
   parentFolder: string,
@@ -64,6 +69,10 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
   const [streak, setStreak] = useState<number>(0);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [isUndoing, setIsUndoing] = useState<boolean>(false);
+  const [classificationToast, setClassificationToast] =
+    useState<ClassificationToastState | null>(null);
+  const toastDismissTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastIdRef = React.useRef(0);
   // Filter items by folder if chosen - Memoized for performance
   const filteredItems = React.useMemo(() => {
     return items.filter((item) => {
@@ -114,6 +123,39 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
     resetCardPosition();
   }, [currentItem?.id]);
 
+  useEffect(() => {
+    return () => {
+      if (toastDismissTimerRef.current) {
+        clearTimeout(toastDismissTimerRef.current);
+      }
+    };
+  }, []);
+
+  const dismissClassificationToast = () => {
+    if (toastDismissTimerRef.current) {
+      clearTimeout(toastDismissTimerRef.current);
+      toastDismissTimerRef.current = null;
+    }
+    setClassificationToast(null);
+  };
+
+  const showClassificationToast = (classification: FreshnessClass, itemName: string) => {
+    toastIdRef.current += 1;
+    setClassificationToast({
+      id: toastIdRef.current,
+      classification,
+      itemName,
+    });
+
+    if (toastDismissTimerRef.current) {
+      clearTimeout(toastDismissTimerRef.current);
+    }
+    toastDismissTimerRef.current = setTimeout(() => {
+      setClassificationToast(null);
+      toastDismissTimerRef.current = null;
+    }, CLASSIFICATION_TOAST_MS);
+  };
+
   const handleClassify = (classification: FreshnessClass) => {
     if (!currentItem) return;
 
@@ -130,7 +172,9 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
       notes: currentItem.description || '',
     };
 
+    const labeledItemName = currentItem.name;
     resetCardPosition();
+    showClassificationToast(classification, labeledItemName);
     onRecordAssessment(record);
     setStreak((prev) => prev + 1);
     // Note: We don't increment currentIndex here because App.tsx will 
@@ -180,6 +224,7 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col items-center select-none py-2">
+      <ClassificationToast toast={classificationToast} onDismiss={dismissClassificationToast} />
       {/* Header Controls: Folder selector & Streak - Hidden on Mobile */}
       <div className="w-full hidden sm:flex items-center justify-between mb-3 px-2">
         <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1 shadow-2xs">
