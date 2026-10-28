@@ -371,11 +371,35 @@ export function saveSupabaseConfig(config: SupabaseConfig): void {
   }
 }
 
+let cachedSupabaseKey: string | null = null;
+let cachedSupabaseClient: SupabaseClient | null = null;
+
+const SUPABASE_CLIENT_OPTIONS = {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+};
+
 export function getSupabaseClient(config: SupabaseConfig): SupabaseClient | null {
   if (!config.url || !config.anonKey) return null;
+
+  const url = config.url.trim();
+  const anonKey = config.anonKey.trim();
+  const cacheKey = `${url}::${anonKey}`;
+
+  if (cachedSupabaseClient && cachedSupabaseKey === cacheKey) {
+    return cachedSupabaseClient;
+  }
+
   try {
-    return createClient(config.url.trim(), config.anonKey.trim());
+    cachedSupabaseKey = cacheKey;
+    cachedSupabaseClient = createClient(url, anonKey, SUPABASE_CLIENT_OPTIONS);
+    return cachedSupabaseClient;
   } catch (err) {
+    cachedSupabaseKey = null;
+    cachedSupabaseClient = null;
     console.error('Invalid Supabase parameters', err);
     return null;
   }
