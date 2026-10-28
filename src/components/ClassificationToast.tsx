@@ -1,113 +1,49 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CheckCircle2, Leaf, AlertTriangle, Sparkles } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { FreshnessClass } from '../types/freshness';
 
 export interface ClassificationToastState {
   id: number;
   classification: FreshnessClass;
-  itemName: string;
 }
 
-const TOAST_META: Record<
-  FreshnessClass,
-  {
-    label: string;
-    message: string;
-    icon: React.ComponentType<{ className?: string }>;
-    shell: string;
-    accent: string;
-    ring: string;
-  }
-> = {
-  fresh: {
-    label: 'Fresh',
-    message: 'Saved as fresh produce',
-    icon: Leaf,
-    shell: 'bg-emerald-50/95 border-emerald-200/90 text-emerald-950',
-    accent: 'text-emerald-600',
-    ring: 'ring-emerald-500/20',
-  },
-  'semi-fresh': {
-    label: 'Semi-Fresh',
-    message: 'Saved as semi-fresh',
-    icon: Sparkles,
-    shell: 'bg-amber-50/95 border-amber-200/90 text-amber-950',
-    accent: 'text-amber-600',
-    ring: 'ring-amber-500/20',
-  },
-  spoiled: {
-    label: 'Spoiled',
-    message: 'Saved as spoiled',
-    icon: AlertTriangle,
-    shell: 'bg-rose-50/95 border-rose-200/90 text-rose-950',
-    accent: 'text-rose-600',
-    ring: 'ring-rose-500/20',
-  },
+const TOAST_MESSAGE: Record<FreshnessClass, string> = {
+  fresh: 'Saved as Fresh',
+  'semi-fresh': 'Saved as Semi-Fresh',
+  spoiled: 'Saved as Spoiled',
+};
+
+const TOAST_STYLE: Record<FreshnessClass, string> = {
+  fresh: 'border-emerald-200 bg-white text-emerald-800',
+  'semi-fresh': 'border-amber-200 bg-white text-amber-800',
+  spoiled: 'border-rose-200 bg-white text-rose-800',
 };
 
 interface ClassificationToastProps {
   toast: ClassificationToastState | null;
-  onDismiss: () => void;
 }
 
-export const ClassificationToast: React.FC<ClassificationToastProps> = ({ toast, onDismiss }) => {
-  const meta = toast ? TOAST_META[toast.classification] : null;
-  const Icon = meta?.icon ?? CheckCircle2;
-
+export const ClassificationToast: React.FC<ClassificationToastProps> = ({ toast }) => {
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]"
       aria-live="polite"
       aria-atomic="true"
     >
       <AnimatePresence mode="wait">
-        {toast && meta && (
+        {toast && (
           <motion.div
             key={toast.id}
             role="status"
-            initial={{ opacity: 0, y: -16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-            className={`pointer-events-auto w-full max-w-[min(100%,24rem)] sm:max-w-md rounded-2xl border shadow-lg shadow-slate-900/10 backdrop-blur-md ring-1 ${meta.shell} ${meta.ring}`}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className={`flex max-w-sm items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold shadow-md ${TOAST_STYLE[toast.classification]}`}
           >
-            <div className="flex items-start gap-3 p-3.5 sm:p-4">
-              <div
-                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 ${meta.accent}`}
-              >
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0 flex-1 pt-0.5">
-                <p className="text-sm sm:text-base font-black tracking-tight">
-                  Marked as {meta.label}
-                </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-medium text-slate-600 truncate">
-                  {toast.itemName}
-                </p>
-                <p className="mt-1 text-[11px] sm:text-xs text-slate-500">{meta.message}</p>
-              </div>
-              <button
-                type="button"
-                onClick={onDismiss}
-                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-white/60 hover:text-slate-800"
-                aria-label="Dismiss notification"
-              >
-                OK
-              </button>
-            </div>
-            <motion.div
-              className={`h-1 origin-left rounded-b-2xl ${
-                toast.classification === 'fresh'
-                  ? 'bg-emerald-500'
-                  : toast.classification === 'semi-fresh'
-                    ? 'bg-amber-500'
-                    : 'bg-rose-500'
-              }`}
-              initial={{ scaleX: 1 }}
-              animate={{ scaleX: 0 }}
-              transition={{ duration: 2.4, ease: 'linear' }}
-            />
+            <CheckCircle2 className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
+            <span>{TOAST_MESSAGE[toast.classification]}</span>
           </motion.div>
         )}
       </AnimatePresence>
