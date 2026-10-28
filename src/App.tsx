@@ -572,7 +572,7 @@ export default function App() {
       </main>
 
       {/* Discreet Footer with Administrator link */}
-      <footer className="border-t border-slate-200/80 py-4 px-6 bg-white/50 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto w-full gap-2">
+      <footer className="hidden sm:flex border-t border-slate-200/80 py-4 px-6 bg-white/50 text-center text-xs text-slate-400 sm:flex-row items-center justify-between max-w-7xl mx-auto w-full gap-2">
         <p>FreshMatch AI Dataset Hub • Simple, friendly food freshness assessment.</p>
         <button
           onClick={() => navigateTo('/administrator')}
