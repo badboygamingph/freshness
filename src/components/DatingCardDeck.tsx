@@ -19,8 +19,20 @@ import { AssessmentRecord, DatasetItem, FreshnessClass, UserSession } from '../t
 // Minimum time the undo loading state stays on screen so the revert is clearly visible.
 const UNDO_LOADING_MS = 600;
 
+function matchesFolderFilter(
+  parentFolder: string,
+  subFolder: string,
+  filter: string
+): boolean {
+  if (filter === 'all') return true;
+  const fullPath = `${parentFolder} / ${subFolder}`;
+  return fullPath === filter || subFolder === filter;
+}
+
 interface DatingCardDeckProps {
   items: DatasetItem[];
+  allItems: DatasetItem[];
+  userAssessments: AssessmentRecord[];
   user: UserSession;
   onRecordAssessment: (record: AssessmentRecord) => void;
   onUndoLastAssessment?: () => void | Promise<void>;
@@ -35,6 +47,8 @@ interface DatingCardDeckProps {
 
 export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
   items,
+  allItems,
+  userAssessments,
   user,
   onRecordAssessment,
   onUndoLastAssessment,
@@ -47,7 +61,6 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
   onRefresh,
 }) => {
   const [selectedFolderFilter, setSelectedFolderFilter] = useState<string>('all');
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [isUndoing, setIsUndoing] = useState<boolean>(false);
@@ -59,6 +72,23 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
       return fullPath === selectedFolderFilter || item.subFolder === selectedFolderFilter;
     });
   }, [items, selectedFolderFilter]);
+
+  const scopedAllItems = React.useMemo(() => {
+    return allItems.filter((item) =>
+      matchesFolderFilter(item.parentFolder, item.subFolder, selectedFolderFilter)
+    );
+  }, [allItems, selectedFolderFilter]);
+
+  const completedInScope = React.useMemo(() => {
+    const scopedIds = new Set(scopedAllItems.map((item) => item.id));
+    return userAssessments.filter((record) => scopedIds.has(record.image_id)).length;
+  }, [scopedAllItems, userAssessments]);
+
+  const totalInScope = scopedAllItems.length;
+  const remainingInScope = filteredItems.length;
+  const progressPercent =
+    totalInScope > 0 ? Math.min(100, Math.round((completedInScope / totalInScope) * 100)) : 0;
+  const currentCardNumber = Math.min(completedInScope + 1, totalInScope);
 
   // We always show the first item of the provided (already filtered) list.
   // App.tsx handles removing evaluated items from this list.
@@ -158,7 +188,6 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
             value={selectedFolderFilter}
             onChange={(e) => {
               setSelectedFolderFilter(e.target.value);
-              setCurrentIndex(0);
               resetCardPosition();
             }}
             className="text-xs font-semibold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer pr-1"
@@ -180,23 +209,42 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
         )}
 
         <div className="text-xs font-bold text-slate-500">
-          {!isCompleted && `${currentIndex + 1} / ${filteredItems.length}`}
+          {!isCompleted && totalInScope > 0 && `${currentCardNumber} / ${totalInScope}`}
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full h-1.5 bg-slate-200 rounded-full mb-4 overflow-hidden">
+      {/* Evaluation progress — emphasized on mobile so evaluators see how close they are */}
+      {!isLoading && totalInScope > 0 && (
         <div
-          className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 transition-all duration-300"
-          style={{
-            width: `${
-              filteredItems.length > 0
-                ? Math.min(100, ((currentIndex) / filteredItems.length) * 100)
-                : 0
-            }%`,
-          }}
-        />
-      </div>
+          className="w-full mb-3 sm:mb-4 px-1"
+          role="progressbar"
+          aria-valuenow={progressPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Evaluation progress: ${completedInScope} of ${totalInScope} images completed`}
+        >
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-600 uppercase tracking-wide">
+              Progress
+            </span>
+            <span className="text-xs sm:text-sm font-black text-emerald-700 tabular-nums">
+              {completedInScope} / {totalInScope}
+              <span className="text-slate-400 font-semibold ml-1">({progressPercent}%)</span>
+            </span>
+          </div>
+          <div className="w-full h-2.5 sm:h-1.5 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 transition-all duration-500 ease-out rounded-full"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="sm:hidden text-[11px] text-slate-500 mt-1.5 text-center font-medium">
+            {remainingInScope === 0
+              ? 'You finished all images in this set!'
+              : `${remainingInScope} image${remainingInScope === 1 ? '' : 's'} left — almost there!`}
+          </p>
+        </div>
+      )}
 
       {/* Main Card Deck Area */}
       <div className="relative w-full h-[400px] sm:h-[460px] md:h-[500px] flex items-center justify-center">
@@ -398,7 +446,7 @@ export const DatingCardDeck: React.FC<DatingCardDeckProps> = React.memo(({
                 Thank You for Evaluating!
               </h3>
               <p className="text-xs text-slate-500 max-w-xs mb-6">
-                You've successfully classified all {filteredItems.length} samples in this batch. Your valuable feedback helps improve the freshness model.
+                You've successfully classified all {totalInScope} samples in this batch. Your valuable feedback helps improve the freshness model.
               </p>
 
               <div className="w-full space-y-2 mb-6">

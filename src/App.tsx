@@ -525,6 +525,8 @@ export default function App() {
             {user ? (
               <DatingCardDeck
                 items={filteredUserItems}
+                allItems={userItems}
+                userAssessments={userAssessments}
                 user={user}
                 onRecordAssessment={handleRecordAssessment}
                 onUndoLastAssessment={handleUndoLastAssessment}
